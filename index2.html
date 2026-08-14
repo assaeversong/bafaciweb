@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>bafaci — мы не гадаем твою норму. Мы её измеряем.</title>
+<meta name="description" content="Телеграм-бот, который две недели измеряет твой настоящий расход калорий, а потом ведёт по тренду и каждую неделю сам подстраивает норму. Без диет, запретов и зала.">
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --grn:#63c354; --grn-d:#4da33f; --grn-l:#d9f0d2; --grn-p:#eef8ea;
+  --ink:#1d362f; --ink-2:#456055; --ink-3:#8ba095;
+  --paper:#f6f5f0; --card:#fff;
+  --max:1180px; --r:28px;
+  --f-body:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --f-disp:'Unbounded','Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);
+  font-family:var(--f-body);
+  font-size:17px;line-height:1.55;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 20px}
+section{padding:clamp(64px,9vw,130px) 0;position:relative}
+
+h1,h2,h3,.disp{font-family:var(--f-disp);font-weight:700;letter-spacing:-.03em;line-height:1.02}
+h1{font-size:clamp(38px,7.6vw,86px)}
+h2{font-size:clamp(29px,5vw,58px);line-height:1.06}
+h3{font-size:clamp(20px,2.6vw,30px);letter-spacing:-.02em}
+.lead{font-size:clamp(17px,2vw,22px);color:var(--ink-2);max-width:640px;line-height:1.55}
+.eyebrow{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--grn-d);background:var(--grn-l);padding:7px 14px;border-radius:99px;margin-bottom:20px}
+.g{color:var(--grn-d)}
+
+.rv{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.9,.3,1),transform .8s cubic-bezier(.2,.9,.3,1)}
+.rv.in{opacity:1;transform:none}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}
+
+/* header */
+header{position:sticky;top:0;z-index:70;background:rgba(246,245,240,.82);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(29,54,47,.08)}
+.nav{max-width:var(--max);margin:0 auto;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-disp);font-weight:700;font-size:19px;letter-spacing:-.02em}
+.brand img{height:30px;width:auto;display:block}
+.btn{display:inline-block;background:var(--grn);color:#fff;font-weight:700;font-family:var(--f-disp);
+  padding:12px 24px;border-radius:99px;text-decoration:none;font-size:15px;letter-spacing:-.01em;
+  transition:transform .3s cubic-bezier(.2,.9,.3,1),box-shadow .3s,background .3s;white-space:nowrap}
+.btn:hover{background:var(--grn-d);transform:translateY(-2px) scale(1.03);box-shadow:0 10px 26px rgba(99,195,84,.35)}
+.btn:active{transform:scale(.98)}
+.btn.sm{padding:9px 18px;font-size:14px}
+.btn.big{font-size:19px;padding:18px 44px}
+
+/* hero */
+.hero{padding-top:clamp(40px,6vw,80px);padding-bottom:0;text-align:center;overflow:hidden}
+.hero h1{margin-bottom:22px}
+.hero .lead{margin:0 auto 32px}
+.blob{position:absolute;border-radius:50%;filter:blur(64px);opacity:.5;pointer-events:none;z-index:-1}
+.blob.a{width:420px;height:420px;background:var(--grn-l);top:-120px;left:-100px}
+.blob.b{width:360px;height:360px;background:#ffe9c7;top:120px;right:-120px}
+.herochart{margin-top:56px;background:var(--card);border-radius:var(--r) var(--r) 0 0;
+  padding:26px 22px 0;box-shadow:0 -6px 40px rgba(29,54,47,.07)}
+.herochart svg{width:100%;height:auto;display:block}
+
+/* marquee */
+.tick{background:var(--ink);color:var(--paper);padding:15px 0;overflow:hidden;white-space:nowrap}
+.tickrow{display:inline-flex;gap:42px;animation:slide 26s linear infinite;font-family:var(--f-disp);
+  font-weight:500;font-size:15px;letter-spacing:.01em;padding-right:42px}
+.tickrow span{display:inline-flex;align-items:center;gap:42px}
+.tickrow b{color:var(--grn);font-weight:700}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* cards */
+.card{background:var(--card);border-radius:var(--r);padding:clamp(22px,3.4vw,40px)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:880px){.grid2,.grid3{grid-template-columns:1fr}}
+
+.step{background:var(--card);border-radius:var(--r);padding:34px 30px;position:relative;overflow:hidden;
+  transition:transform .35s cubic-bezier(.2,.9,.3,1)}
+.step:hover{transform:translateY(-6px)}
+  .step .n{font-family:var(--f-disp);font-weight:800;font-size:78px;color:var(--grn-l);line-height:.8;margin-bottom:14px}
+.step h3{margin-bottom:10px}
+.step p{color:var(--ink-2);font-size:16px}
+
+/* calibration */
+.calib{display:flex;align-items:center;justify-content:center;gap:clamp(16px,5vw,60px);flex-wrap:wrap;text-align:center}
+  .cnum{font-family:var(--f-disp);font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.cold{font-size:clamp(34px,5.5vw,62px);color:var(--ink-3);position:relative}
+.cold::after{content:'';position:absolute;left:-8%;right:-8%;top:50%;height:5px;background:var(--ink-3);
+  border-radius:9px;transform:scaleX(0);transform-origin:left;transition:transform .7s cubic-bezier(.2,.9,.3,1) .45s}
+.calib.in .cold::after{transform:scaleX(1)}
+.cnew{font-size:clamp(46px,8vw,96px);color:var(--grn-d)}
+.clbl{font-size:14.5px;color:var(--ink-3);margin-top:10px;font-weight:600}
+.carrow{font-size:28px;color:var(--grn);font-weight:700}
+
+/* verdicts */
+.vd{display:flex;gap:16px;padding:19px 0;border-bottom:2px dashed rgba(29,54,47,.1);align-items:flex-start}
+.vd:last-child{border-bottom:0}
+.pill{flex:none;font-family:var(--f-body);font-weight:800;font-size:13px;padding:6px 13px;border-radius:99px;
+  background:var(--grn-l);color:var(--grn-d);white-space:nowrap;margin-top:2px}
+.pill.gr{background:#eceae3;color:var(--ink-3)}
+.vd .t{font-weight:700;font-size:clamp(16px,1.9vw,19px)}
+.vd .s{color:var(--ink-2);font-size:15.5px;margin-top:3px}
+
+/* phone */
+.phone{width:296px;max-width:84vw;margin:0 auto;background:var(--ink);border-radius:38px;
+  padding:14px 12px 20px;box-shadow:0 30px 70px rgba(29,54,47,.24)}
+.notch{width:88px;height:5px;background:rgba(255,255,255,.22);border-radius:99px;margin:0 auto 14px}
+.msg{background:#2b463d;color:#eef3f0;border-radius:16px 16px 16px 5px;padding:10px 13px;font-size:14.5px;
+  margin-bottom:8px;max-width:88%;line-height:1.4;opacity:0;transform:translateY(10px) scale(.96);
+  transition:all .5s cubic-bezier(.2,.9,.3,1)}
+.msg.me{background:var(--grn);color:#fff;margin-left:auto;border-radius:16px 16px 5px 16px;font-weight:700}
+.msg.on{opacity:1;transform:none}
+.msg .sm{display:block;font-size:12.5px;opacity:.72;margin-top:4px}
+
+/* levels */
+.lv{background:var(--card);border-radius:var(--r);padding:28px 22px;text-align:center;
+  transition:transform .35s cubic-bezier(.2,.9,.3,1)}
+.lv:hover{transform:translateY(-6px) rotate(-1.2deg)}
+.lv .ring{width:74px;height:74px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--f-disp);font-weight:800;font-size:22px;color:#fff;background:var(--grn)}
+.lv .ring.g2{background:var(--grn-d)}.lv .ring.g3{background:var(--ink)}
+.lv b{display:block;font-family:var(--f-body);font-weight:800;font-size:17px;margin-bottom:6px;letter-spacing:-.01em}
+.lv span{font-family:var(--f-body);font-size:15px;color:var(--ink-2);line-height:1.45}
+
+/* no-list */
+.no{display:flex;gap:13px;align-items:baseline;padding:15px 0;border-bottom:2px dashed rgba(29,54,47,.1);
+  font-size:clamp(16px,2vw,20px);color:var(--ink-2)}
+.no:last-child{border-bottom:0}
+.no i{color:var(--grn);font-style:normal;font-weight:800;font-family:var(--f-body);flex:none}
+.no b{color:var(--ink)}
+
+/* stats */
+  .bignum{font-family:var(--f-disp);font-weight:800;font-size:clamp(46px,7.6vw,88px);color:var(--grn-d);
+  line-height:1;font-variant-numeric:tabular-nums}
+.statlbl{font-size:15px;color:var(--ink-2);margin-top:11px;line-height:1.4}
+
+/* price */
+.pricecard{background:var(--ink);color:var(--paper);border-radius:36px;padding:clamp(36px,5vw,64px) 26px;text-align:center}
+  .price{font-family:var(--f-disp);font-weight:800;font-size:clamp(48px,8vw,88px);line-height:1;color:var(--grn)}
+.oldp{color:rgba(246,245,240,.42);text-decoration:line-through;font-size:21px;margin-left:12px;font-family:var(--f-body);font-weight:600}
+.pricecard .btn{background:var(--grn);margin-top:28px}
+.pricecard .btn:hover{background:#77d267}
+
+footer{background:var(--ink);color:rgba(246,245,240,.62);padding:44px 0 56px;font-size:14px;line-height:1.7}
+footer a{color:var(--grn);text-decoration:none;font-weight:600}
+footer .brand{color:var(--paper);margin-bottom:16px}
+.disc{margin-top:14px;max-width:620px;font-size:13px;color:rgba(246,245,240,.4)}
+
+@media(max-width:560px){
+  .nav .btn.sm{padding:8px 15px;font-size:13px}
+  .brand{font-size:17px}.brand img{height:26px}
+  .step{padding:26px 22px}.step .n{font-size:60px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="brand"><img src="logo.png" alt=""> bafaci</div>
+    <a class="btn sm" href="#start">Занять место</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="blob a"></div><div class="blob b"></div>
+  <div class="wrap">
+    <div class="eyebrow rv">Набор открыт · 15 мест</div>
+    <h1 class="rv d1">Твоя норма —<br>не из <span class="g">калькулятора</span>.<br>Из тебя.</h1>
+    <p class="lead rv d2">Две недели ты вообще ничего не меняешь. Просто встаёшь на весы.
+      Дальше бот считает, сколько твоё тело тратит на самом деле, и ведёт по этой цифре.</p>
+    <a class="btn big rv d3" href="#start">Хочу в поток</a>
+
+    <div class="herochart rv d4">
+      <svg id="hchart" viewBox="0 0 1000 220" preserveAspectRatio="none" style="height:clamp(140px,20vw,220px)">
+        <defs><linearGradient id="hg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#63c354" stop-opacity=".3"/>
+          <stop offset="1" stop-color="#63c354" stop-opacity="0"/></linearGradient></defs>
+        <path id="hfill" fill="url(#hg)" opacity="0"/>
+        <path id="hline" stroke="#63c354" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle id="hdot" r="9" fill="#63c354" opacity="0"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="tick" aria-hidden="true">
+  <div class="tickrow">
+    <span>без диет <b>•</b> без запретов <b>•</b> без зала <b>•</b> без добавок <b>•</b> без «с понедельника» <b>•</b> без чувства вины <b>•</b></span>
+    <span>без диет <b>•</b> без запретов <b>•</b> без зала <b>•</b> без добавок <b>•</b> без «с понедельника» <b>•</b> без чувства вины <b>•</b></span>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section>
+  <div class="wrap" style="text-align:center">
+    <h2 class="rv">«Ем 1500 и не худею»</h2>
+    <p class="lead rv d1" style="margin:26px auto 0;text-align:center">
+      Знакомо? Дело не в тебе и не в силе воли. Просто 1500 — это чужая цифра.
+      Калькулятор посчитал её для среднего человека, а среднего человека не существует:
+      у двоих с одинаковыми ростом и весом расход отличается на 400–500 калорий в день.</p>
+  </div>
+</section>
+
+<!-- HOW -->
+<section style="background:var(--grn-p)">
+  <div class="wrap">
+    <div style="text-align:center;margin-bottom:48px">
+      <div class="eyebrow rv" style="background:#fff">Как это работает</div>
+      <h2 class="rv d1">Три шага, и ты в деле</h2>
+    </div>
+    <div class="grid3">
+      <div class="step rv d1"><div class="n">01</div><h3>Измеряем</h3>
+        <p>Две недели ешь как ел. Только весы утром и учёт еды. Никаких ограничений — иначе я померю твою диету, а не тебя.</p></div>
+      <div class="step rv d2"><div class="n">02</div><h3>Считаем</h3>
+        <p>Бот выводит твой реальный расход из связки «сколько ел» и «что показал вес». Не формула — измерение.</p></div>
+      <div class="step rv d3"><div class="n">03</div><h3>Ведём</h3>
+        <p>Каждую неделю смотрим на тренд и двигаем цифру. Ты не принимаешь ни одного решения — просто читаешь.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CALIBRATION -->
+<section>
+  <div class="wrap">
+    <div class="card rv" style="text-align:center">
+      <div class="eyebrow">Момент истины · 14-й день</div>
+      <div class="calib" id="calib" style="margin:34px 0 8px">
+        <div><div class="cnum cold" id="cold">1840</div><div class="clbl">сказал бы калькулятор</div></div>
+        <div class="carrow">→</div>
+        <div><div class="cnum cnew" id="cnew">1840</div><div class="clbl">намерено по тебе</div></div>
+      </div>
+      <p class="lead" style="margin:30px auto 0;text-align:center">
+        Пятьсот калорий в день разницы. Вот почему все прошлые попытки заканчивались ничем —
+        ты честно голодал по чужой цифре.</p>
+    </div>
+  </div>
+</section>
+
+<!-- VERDICTS -->
+<section style="background:var(--grn-p)">
+  <div class="wrap">
+    <div class="eyebrow rv" style="background:#fff">Каждую неделю</div>
+    <h2 class="rv d1">Что бы ни показали весы —<br>ты знаешь, что делать</h2>
+    <p class="lead rv d2" style="margin-top:22px">Люди бросают не от голода, а от растерянности.
+      Здесь растеряться негде: у каждого исхода готов спокойный ответ.</p>
+    <div class="card rv d3" style="margin-top:40px">
+      <div class="vd"><span class="pill">всё ок</span><div><div class="t">Идём как надо</div>
+        <div class="s">Ничего не меняем. Норма прежняя.</div></div></div>
+      <div class="vd"><span class="pill">−100</span><div><div class="t">Чуть медленнее плана</div>
+        <div class="s">Снимаем сотню. Обычная подстройка, не повод для паники.</div></div></div>
+      <div class="vd"><span class="pill">+100</span><div><div class="t">Слишком быстро</div>
+        <div class="s">Добавляем еды. Да, программа похудения говорит есть больше — иначе уходит мышца.</div></div></div>
+      <div class="vd"><span class="pill gr">ждём</span><div><div class="t">Неделя без движения</div>
+        <div class="s">Сначала проверим подсчёт, только потом режем. Плато — это норма.</div></div></div>
+      <div class="vd"><span class="pill gr">ждём</span><div><div class="t">Плюс на весах</div>
+        <div class="s">Одна такая неделя почти всегда вода. Резать сейчас было бы паникой.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PHONE -->
+<section>
+  <div class="wrap">
+    <div class="grid2" style="align-items:center;gap:clamp(28px,5vw,66px)">
+      <div>
+        <div class="eyebrow rv">Каждое утро</div>
+        <h2 class="rv d1">Полторы минуты.<br>Два действия.</h2>
+        <p class="lead rv d2" style="margin-top:22px">Бот пишет первым. Показывает не скачущую цифру дня,
+          а сглаженную линию — то есть правду. Вечером один вопрос, как прошёл день.</p>
+        <p class="lead rv d3" style="margin-top:18px;font-size:17px">
+          <b>А если пропал на три дня</b> — тебе напишет живой человек. Не бот.</p>
+      </div>
+      <div class="rv d2">
+        <div class="phone" id="phone">
+          <div class="notch"></div>
+          <div class="msg">Доброе утро. Вес?</div>
+          <div class="msg me">84.3</div>
+          <div class="msg">Записал: 84.3 кг<span class="sm">Тренд: −0,6 кг за неделю. Идём как надо</span></div>
+          <div class="msg">Это твой новый минимум за всё время</div>
+          <div class="msg me">🔥</div>
+          <div class="msg">Стрик: 23 дня подряд<span class="sm">Ещё день — и будет месяц</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEVELS -->
+<section style="background:var(--grn-p)">
+  <div class="wrap">
+    <div style="text-align:center;margin-bottom:42px">
+      <div class="eyebrow rv" style="background:#fff">Стрик</div>
+      <h2 class="rv d1">Считается отчётность,<br>а не безупречность</h2>
+      <p class="lead rv d2" style="margin:22px auto 0;text-align:center">
+        Переел — стрик жив, если отметился. Обнуляет его только исчезновение.
+        Те, кто доходит до конца, отличаются не силой воли, а тем, что возвращаются после плохого дня.</p>
+    </div>
+    <div class="grid3">
+      <div class="lv rv d1"><div class="ring">7</div><b>Первая неделя</b><span>Это уже не мотивация. Мотивация столько не живёт</span></div>
+      <div class="lv rv d2"><div class="ring g2">30</div><b>Месяц</b><span>Привычка. Дальше идёт само</span></div>
+      <div class="lv rv d3"><div class="ring g3">100</div><b>Сто дней</b><span>Карточка, которую хочется показать</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULT -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow rv">Проверено на себе</div>
+    <h2 class="rv d1">170 замеров подряд.<br>Каждое утро, полгода</h2>
+    <div class="card rv d2" style="margin-top:38px;padding-bottom:26px">
+      <svg id="chart" viewBox="0 0 1000 330" style="width:100%;height:auto;overflow:visible">
+        <g stroke="rgba(29,54,47,.1)" stroke-width="1.5" stroke-dasharray="5 7">
+          <line x1="58" y1="66" x2="980" y2="66"/><line x1="58" y1="152" x2="980" y2="152"/>
+          <line x1="58" y1="238" x2="980" y2="238"/></g>
+        <text x="44" y="71" fill="#8ba095" font-size="15" text-anchor="end" font-family="Manrope, Arial, sans-serif">80</text>
+        <text x="44" y="157" fill="#8ba095" font-size="15" text-anchor="end" font-family="Manrope, Arial, sans-serif">75</text>
+        <text x="44" y="243" fill="#8ba095" font-size="15" text-anchor="end" font-family="Manrope, Arial, sans-serif">70</text>
+        <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#63c354" stop-opacity=".3"/>
+          <stop offset="1" stop-color="#63c354" stop-opacity="0"/></linearGradient></defs>
+        <path id="cfill" fill="url(#cg)" opacity="0"/>
+        <path id="cline" stroke="#63c354" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle id="cdot" r="9" fill="#63c354" opacity="0"/>
+        <text x="58" y="308" fill="#8ba095" font-size="15" font-family="Manrope, Arial, sans-serif">14 февраля · 83 кг</text>
+        <text x="980" y="308" fill="#4da33f" font-size="15" text-anchor="end" font-family="Manrope, Arial, sans-serif" font-weight="700">3 августа · 68,7 кг</text>
+      </svg>
+    </div>
+    <div class="grid3" style="margin-top:20px">
+      <div class="card rv d1"><div class="bignum" data-count="14" data-pre="−">0</div>
+        <div class="statlbl">килограммов с пика</div></div>
+      <div class="card rv d2"><div class="bignum" data-count="2000">0</div>
+        <div class="statlbl">минимум калорий за всё время. Без голода</div></div>
+      <div class="card rv d3"><div class="bignum" data-count="2400">0</div>
+        <div class="statlbl">ем сейчас, и вес держится</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- NO -->
+<section style="background:var(--grn-p)">
+  <div class="wrap">
+    <div class="eyebrow rv" style="background:#fff">Осознанно</div>
+    <h2 class="rv d1">Чего здесь нет</h2>
+    <p class="lead rv d2" style="margin-top:20px">Это не список недоделок. Это позиция.</p>
+    <div class="card rv d3" style="margin-top:36px">
+      <div class="no"><i>✕</i><div><b>Диет и запретов.</b> Ешь что ел — просто считай</div></div>
+      <div class="no"><i>✕</i><div><b>Зала и абонемента.</b> Ходьба, и та по желанию</div></div>
+      <div class="no"><i>✕</i><div><b>Техники и прогрессий.</b> Ничему сложному учиться не надо</div></div>
+      <div class="no"><i>✕</i><div><b>Добавок и жиросжигателей.</b> Мы вообще ничего не продаём</div></div>
+      <div class="no"><i>✕</i><div><b>Обещаний в килограммах.</b> Никаких «минус 10 за месяц»</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICE -->
+<section id="start">
+  <div class="wrap">
+    <div class="pricecard rv">
+      <div class="eyebrow" style="background:rgba(99,195,84,.18);color:var(--grn)">Первый набор</div>
+      <h3 style="color:var(--paper);margin:14px 0 26px">2 недели замера<br>+ 8 недель работы</h3>
+      <div class="price">1750 ₽<span class="oldp">4000 ₽</span></div>
+      <p style="max-width:520px;margin:20px auto 0;font-size:16px;color:rgba(246,245,240,.72)">
+        Стартовая цена только для первого набора: систему запускаю впервые и прошу писать мне обо всём,
+        что окажется неудобным. Дальше будет дороже.</p>
+      <a class="btn big" href="https://t.me/bafaci_coach_bot">Занять место</a>
+      <p style="margin-top:18px;font-size:14px;color:rgba(246,245,240,.5)">
+        15 мест · не пойдёт на второй неделе — верну деньги без вопросов</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand"><img src="logo.png" alt="" style="height:28px"> bafaci</div>
+    <a href="https://t.me/bafaci">Канал</a> · <a href="https://t.me/bafaci_coach_bot">Бот</a>
+    <p class="disc">Не является медицинской рекомендацией и не заменяет консультацию врача.
+      При беременности, кормлении, хронических заболеваниях, приёме препаратов, влияющих на вес,
+      и при расстройствах пищевого поведения — сначала к специалисту.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function once(el,cb,th){
+  if(!el) return;
+  var o=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ cb(e.target); o.unobserve(e.target);} });
+  },{threshold:th||.2,rootMargin:'0px 0px -6% 0px'});
+  o.observe(el);
+}
+
+/* появление */
+var io=new IntersectionObserver(function(es){
+  es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+},{threshold:.12,rootMargin:'0px 0px -5% 0px'});
+document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});
+/* страховка: что уже видно при загрузке — показать сразу */
+setTimeout(function(){
+  document.querySelectorAll('.rv').forEach(function(el){
+    var r=el.getBoundingClientRect();
+    if(r.top<innerHeight*.95) el.classList.add('in');
+  });
+},60);
+
+/* рисование пути */
+function drawPath(line,fill,dot,dur){
+  var L=line.getTotalLength();
+  line.style.strokeDasharray=L; line.style.strokeDashoffset=reduce?0:L;
+  requestAnimationFrame(function(){
+    line.style.transition='stroke-dashoffset '+dur+'ms cubic-bezier(.25,.8,.35,1)';
+    line.style.strokeDashoffset=0;
+    if(fill){fill.style.transition='opacity 900ms ease '+(dur*.45)+'ms';fill.style.opacity=1;}
+    if(dot){dot.style.transition='opacity 400ms ease '+(dur*.86)+'ms';dot.style.opacity=1;}
+  });
+}
+function build(svgId,lineId,fillId,dotId,data,lo,hi,pad){
+  var svg=document.getElementById(svgId); if(!svg) return null;
+  var vb=svg.viewBox.baseVal, X0=pad.l, X1=vb.width-pad.r, Y0=pad.t, Y1=vb.height-pad.b;
+  var Y=function(v){return Y1-(v-lo)/(hi-lo)*(Y1-Y0);};
+  var pts=data.map(function(v,i){return [X0+(X1-X0)*i/(data.length-1),Y(v)];});
+  var d=pts.map(function(p,i){return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ');
+  var line=document.getElementById(lineId), fill=document.getElementById(fillId), dot=document.getElementById(dotId);
+  line.setAttribute('d',d);
+  if(fill) fill.setAttribute('d',d+' L'+X1+' '+(Y1+pad.b*.4)+' L'+X0+' '+(Y1+pad.b*.4)+' Z');
+  if(dot){dot.setAttribute('cx',pts[pts.length-1][0]);dot.setAttribute('cy',pts[pts.length-1][1]);}
+  return {line:line,fill:fill,dot:dot};
+}
+
+var HERO=[80,79.4,79.6,78.9,78.4,77.2,76.7,75.9,75.0,74.8,73.6,72.4,71.4,70.9,70.6,70.1,69.8,69.0,68.7];
+var h=build('hchart','hline','hfill','hdot',HERO,68,80.5,{l:14,r:14,t:22,b:26});
+if(h) setTimeout(function(){drawPath(h.line,h.fill,h.dot,2200);},500);
+
+var W=[83,79.8,79.45,79.45,78.83,78.83,78.43,77.24,76.73,75.87,75.04,74.84,73.64,72.4,
+       71.37,70.93,70.57,70.1,69.79,69.04,68.78,68.74,68.6,68.98,68.67];
+var c=build('chart','cline','cfill','cdot',W,67,84,{l:58,r:20,t:36,b:100});
+if(c) once(document.getElementById('chart'),function(){drawPath(c.line,c.fill,c.dot,2600);},.3);
+
+/* счётчики */
+document.querySelectorAll('[data-count]').forEach(function(el){
+  once(el,function(){
+    var to=+el.dataset.count,pre=el.dataset.pre||'',t0=null;
+    if(reduce){el.textContent=pre+to.toLocaleString('ru-RU');return;}
+    (function step(t){ t0=t0||t; var p=Math.min((t-t0)/1400,1), e=1-Math.pow(1-p,3);
+      el.textContent=pre+Math.round(to*e).toLocaleString('ru-RU');
+      if(p<1)requestAnimationFrame(step); })(performance.now());
+  },.45);
+});
+
+/* калибровка */
+once(document.getElementById('calib'),function(el){
+  el.classList.add('in');
+  var n=document.getElementById('cnew');
+  if(reduce){n.textContent='2340';return;}
+  setTimeout(function(){ var t0=null;
+    (function s(t){ t0=t0||t; var p=Math.min((t-t0)/1300,1), e=1-Math.pow(1-p,3);
+      n.textContent=Math.round(1840+500*e); if(p<1)requestAnimationFrame(s); })(performance.now());
+  },480);
+},.4);
+
+/* сообщения */
+once(document.getElementById('phone'),function(el){
+  el.querySelectorAll('.msg').forEach(function(m,i){
+    setTimeout(function(){m.classList.add('on');},reduce?0:i*400);
+  });
+},.3);
+})();
+</script>
+</body>
+</html>
