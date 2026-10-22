@@ -154,8 +154,20 @@ header{position:sticky;top:0;z-index:70;background:rgba(246,245,240,.82);
 
 footer{background:var(--ink);color:rgba(246,245,240,.62);padding:44px 0 56px;font-size:14px;line-height:1.7}
 footer a{color:var(--grn);text-decoration:none;font-weight:600}
-footer .brand{color:var(--paper);margin-bottom:16px}
+footer .brand{color:var(--paper)}
 .disc{margin-top:14px;max-width:620px;font-size:13px;color:rgba(246,245,240,.4)}
+.foot{display:flex;justify-content:space-between;align-items:flex-start;gap:28px 48px;flex-wrap:wrap}
+.foot__main{flex:1 1 480px;min-width:0}
+.foot__top{display:flex;align-items:center;gap:14px 22px;flex-wrap:wrap;margin-bottom:16px}
+.socials{display:flex;gap:8px;margin:0;padding:0;list-style:none}
+.socials a{display:block;width:32px;height:32px;transition:opacity .15s}
+.socials a:hover{opacity:.8}
+.socials svg{display:block;width:100%;height:100%}
+.ico-bg{fill:var(--grn)}.ico-fg{fill:var(--ink)}.ico-st{fill:none;stroke:var(--ink);stroke-linecap:round}
+.foot__req{text-align:right;font-size:13px;line-height:1.8}
+.foot__req b{display:block;color:var(--paper);font-weight:600}
+.foot__legal{margin-top:28px;padding-top:18px;border-top:1px solid rgba(246,245,240,.12);font-size:12px;color:rgba(246,245,240,.4)}
+@media(max-width:760px){.foot__req{text-align:left}}
 
 @media(max-width:560px){
   .nav .btn.sm{padding:8px 15px;font-size:13px}
@@ -396,15 +408,35 @@ footer .brand{color:var(--paper);margin-bottom:16px}
 
 <footer>
   <div class="wrap">
-    <div class="brand"><img src="logo.png" alt="" style="height:28px"> bafaci</div>
-    <a href="https://t.me/bafaci_coach_bot?start=futer">Бот</a> ·
-    <a href="https://t.me/bafaci">Канал</a> ·
-    <a href="offer.html">Оферта</a> ·
-    <a href="privacy.html">Политика конфиденциальности</a> ·
-    <a href="consent.html">Согласие на обработку данных</a>
-    <p class="disc">Не является медицинской рекомендацией и не заменяет консультацию врача.
-      При беременности, кормлении, хронических заболеваниях, приёме препаратов, влияющих на вес,
-      и при расстройствах пищевого поведения — сначала обратитесь к специалисту.</p>
+    <div class="foot">
+      <div class="foot__main">
+        <div class="foot__top">
+          <div class="brand"><img src="logo.png" alt="" style="height:28px"> bafaci</div>
+          <!-- свои значки соцсетей, viewBox 0 0 30 30 -->
+          <ul class="socials">
+            <li><a href="https://t.me/bafaci" aria-label="Telegram-канал" target="_blank" rel="noopener"><svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="15" class="ico-bg"/><path class="ico-fg" d="M7.2 14.6l13.9-5.4c.65-.24 1.2.15 1 1.13l-2.36 11.1c-.17.79-.64.98-1.3.61l-3.6-2.65-1.73 1.67c-.2.2-.36.36-.73.36l.26-3.66 6.66-6.02c.29-.26-.06-.4-.45-.15l-8.23 5.18-3.55-1.1c-.77-.24-.78-.77.16-1.14z"/></svg></a></li>
+            <li><a href="https://www.instagram.com/bafaci.moscow/" aria-label="Instagram" target="_blank" rel="noopener"><svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="15" class="ico-bg"/><rect class="ico-st" x="8.6" y="8.6" width="12.8" height="12.8" rx="3.8" stroke-width="1.8"/><circle class="ico-st" cx="15" cy="15" r="3.1" stroke-width="1.8"/><circle class="ico-fg" cx="18.8" cy="11.2" r=".95"/></svg></a></li>
+            <li><a href="https://www.tiktok.com/@bafaci" aria-label="TikTok" target="_blank" rel="noopener"><svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="15" class="ico-bg"/><path class="ico-st" d="M16.2 8.4v9.8a2.8 2.8 0 1 1-2.8-2.8M16.2 8.6c.4 2.1 1.9 3.5 4.2 3.7" stroke-width="2.2"/></svg></a></li>
+            <li><a href="https://vk.com/bafaci" aria-label="ВКонтакте" target="_blank" rel="noopener"><svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="15" class="ico-bg"/><text class="ico-fg" x="15" y="18.4" text-anchor="middle" font-family="Unbounded, Manrope, Arial, sans-serif" font-weight="700" font-size="9.6">VK</text></svg></a></li>
+            <li><a href="https://www.youtube.com/@bafaci" aria-label="YouTube" target="_blank" rel="noopener"><svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="15" class="ico-bg"/><rect class="ico-fg" x="7" y="9.6" width="16" height="10.8" rx="3.2"/><path class="ico-bg" d="M13.3 12.3v5.4l4.7-2.7z"/></svg></a></li>
+          </ul>
+        </div>
+        <a href="https://t.me/bafaci_coach_bot?start=futer">Бот</a> ·
+        <a href="offer.html">Оферта</a> ·
+        <a href="privacy.html">Политика конфиденциальности</a> ·
+        <a href="consent.html">Согласие на обработку данных</a>
+        <p class="disc">Не является медицинской рекомендацией и не заменяет консультацию врача.
+          При беременности, кормлении, хронических заболеваниях, приёме препаратов, влияющих на вес,
+          и при расстройствах пищевого поведения — сначала обратитесь к специалисту.</p>
+      </div>
+      <div class="foot__req">
+        <b>Смирнов Иван Валерьевич</b>
+        Самозанятый (НПД)<br>
+        ИНН 773122023607<br>
+        <a href="mailto:info@bafaci.ru">info@bafaci.ru</a>
+      </div>
+    </div>
+    <p class="foot__legal">Instagram принадлежит компании Meta, которая признана экстремистской организацией и запрещена в России.</p>
   </div>
 </footer>
 
@@ -496,5 +528,6 @@ once(document.getElementById('phone'),function(el){
 },.3);
 })();
 </script>
+<script src="site.js" defer></script>
 </body>
 </html>
